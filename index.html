@@ -35,7 +35,8 @@
         .mistake-box { margin-top: 5px; text-align: left; background: #fff; border: 1px solid #ced4da; border-radius: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
         .mistake-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f1f3f5; font-size: 15px; }
         .mistake-item:nth-child(even) { background-color: #f8f9fa; }
-        .mistake-jap { color: #ff8c00; font-weight: normal; text-align: right; flex: 1; margin-left: 10px; word-break: break-word; }
+        /* 赤シートで隠しやすい明るめのオレンジに変更 */
+        .mistake-jap { color: #ff8c00; font-weight: normal; text-align: right; flex: 1; margin-left: 10px; word-break: break-word; } 
         .mistake-num { color: #6c757d; font-size: 13px; font-family: monospace; font-weight: bold; width: 45px; margin-right: 5px; }
         .mistake-eng { font-weight: bold; color: #333; } 
     </style>
@@ -47,7 +48,7 @@
         <h1>ターゲット1900</h1>
         <div class="subtitle">Static Web App</div>
 
-        <button id="mistake-list-btn" class="btn-action btn-list hidden" onclick="showMistakeScreen()">
+        <button id="mistake-list-btn" class="btn-action btn-list" onclick="showMistakeScreen()">
             📝 苦手な単語リストを見る (<span id="mistake-count">0</span>語)
         </button>
 
@@ -77,13 +78,17 @@
         </div>
         
         <button class="btn-main btn-blue" onclick="startTest('normal')">通常テスト開始</button>
-        <button id="quick-weak-test-btn" class="btn-main btn-red hidden" onclick="startTest('weak')" style="margin-top: 10px;">
+        <button id="quick-weak-test-btn" class="btn-main btn-red" onclick="startTest('weak')" style="margin-top: 10px;">
             苦手単語のテスト (<span id="quick-mistake-count">0</span>語)
         </button>
     </div>
 
     <div id="mistake-screen" class="hidden">
-        <h2 style="color: #e03131; margin-top: 5px;">要復習リスト</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="color: #e03131; margin: 0;">要復習リスト</h2>
+            <button style="padding: 10px 15px; border: none; border-radius: 8px; background: #e9ecef; font-weight: bold; cursor: pointer; color: #333;" onclick="hideMistakeScreen()">◀ 戻る</button>
+        </div>
+
         <div class="setting-box" id="weak-settings" style="margin-bottom: 10px; padding: 10px;">
             <span class="setting-title" style="margin-bottom: 5px;">■ 復習テストの出題数</span>
             <div class="select-grid">
@@ -96,7 +101,7 @@
         </div>
         <button id="start-weak-test-btn" class="btn-main btn-red" onclick="startTest('weak')" style="margin-bottom: 10px; padding: 12px;">リストの単語でテスト開始</button>
         <div class="mistake-box" id="full-mistake-list"></div>
-        <button class="btn-main" style="background: #e9ecef; color: #333;" onclick="hideMistakeScreen()">ホームに戻る</button>
+        <button class="btn-main" style="background: #e9ecef; color: #333;" onclick="hideMistakeScreen()">◀ ホームに戻る</button>
     </div>
 
     <div id="test-screen" class="hidden">
@@ -148,17 +153,8 @@
 
     function updateMistakeCount() {
         let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-        const mistakeBtn = document.getElementById('mistake-list-btn');
-        const quickTestBtn = document.getElementById('quick-weak-test-btn');
-        if (saved.length > 0) { 
-            mistakeBtn.classList.remove('hidden'); 
-            quickTestBtn.classList.remove('hidden');
-            document.getElementById('mistake-count').innerText = saved.length; 
-            document.getElementById('quick-mistake-count').innerText = saved.length;
-        } else { 
-            mistakeBtn.classList.add('hidden'); 
-            quickTestBtn.classList.add('hidden');
-        }
+        document.getElementById('mistake-count').innerText = saved.length; 
+        document.getElementById('quick-mistake-count').innerText = saved.length;
     }
 
     function showMistakeScreen() {
@@ -175,7 +171,7 @@
             });
         } else {
             testBtn.style.display = 'none'; weakSettings.style.display = 'none';
-            list.innerHTML = '<div style="text-align:center; color:#666; padding: 30px 10px;">現在、苦手な単語は登録されていません。</div>';
+            list.innerHTML = '<div style="text-align:center; color:#666; padding: 30px 10px;">現在、苦手な単語は登録されていません。<br>通常テストで間違えた単語がここに追加されます！</div>';
         }
         document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('mistake-screen').classList.remove('hidden');
     }
@@ -206,7 +202,10 @@
                 words = filteredWords.slice(0, Math.min(count, filteredWords.length));
             } else {
                 let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-                if (saved.length === 0) return;
+                if (saved.length === 0) {
+                    alert("現在、登録されている苦手な単語はありません。\n通常テストで間違えた単語がここに追加されます！");
+                    return;
+                }
                 const weakCountVal = document.getElementById('weak-question-count').value;
                 let count = saved.length;
                 if (weakCountVal !== 'all') { count = Math.min(parseInt(weakCountVal), saved.length); }
