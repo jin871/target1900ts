@@ -35,7 +35,6 @@
         .mistake-box { margin-top: 5px; text-align: left; background: #fff; border: 1px solid #ced4da; border-radius: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
         .mistake-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f1f3f5; font-size: 15px; }
         .mistake-item:nth-child(even) { background-color: #f8f9fa; }
-        /* 赤シートで隠しやすい明るめのオレンジに変更 */
         .mistake-jap { color: #ff8c00; font-weight: normal; text-align: right; flex: 1; margin-left: 10px; word-break: break-word; } 
         .mistake-num { color: #6c757d; font-size: 13px; font-family: monospace; font-weight: bold; width: 45px; margin-right: 5px; }
         .mistake-eng { font-weight: bold; color: #333; } 
@@ -63,17 +62,17 @@
             <input type="hidden" id="question-count" value="10">
         </div>
         <div class="setting-box">
-            <span class="setting-title">■ 範囲を選択（Part指定）</span>
+            <span class="setting-title">■ 範囲を選択（複数選択可）</span>
             <div class="select-grid-3">
-                <button class="btn-opt stage-btn active" data-start="1" data-end="800" onclick="toggleStageBtn(this)">Part 1<br>(1-800)</button>
-                <button class="btn-opt stage-btn" data-start="801" data-end="1500" onclick="toggleStageBtn(this)">Part 2<br>(801-1500)</button>
-                <button class="btn-opt stage-btn" data-start="1501" data-end="1900" onclick="toggleStageBtn(this)">Part 3<br>(1501-1900)</button>
+                <button class="btn-opt stage-btn active" data-start="1" data-end="800" onclick="toggleStageRange(this)">Part 1<br>(1-800)</button>
+                <button class="btn-opt stage-btn" data-start="801" data-end="1500" onclick="toggleStageRange(this)">Part 2<br>(801-1500)</button>
+                <button class="btn-opt stage-btn" data-start="1501" data-end="1900" onclick="toggleStageRange(this)">Part 3<br>(1501-1900)</button>
             </div>
             <div class="custom-inputs">
                 <span>直接入力:</span>
-                <input type="number" id="custom-start" value="1" min="0" max="1900" step="100" oninput="clearStageSelection()">
+                <input type="number" id="custom-start" value="1" min="1" max="1900" oninput="clearStageSelection()">
                 <span style="color: #999;">〜</span>
-                <input type="number" id="custom-end" value="800" min="0" max="1900" step="100" oninput="clearStageSelection()">
+                <input type="number" id="custom-end" value="800" min="1" max="1900" oninput="clearStageSelection()">
             </div>
         </div>
         
@@ -88,7 +87,6 @@
             <h2 style="color: #e03131; margin: 0;">要復習リスト</h2>
             <button style="padding: 10px 15px; border: none; border-radius: 8px; background: #e9ecef; font-weight: bold; cursor: pointer; color: #333;" onclick="hideMistakeScreen()">◀ 戻る</button>
         </div>
-
         <div class="setting-box" id="weak-settings" style="margin-bottom: 10px; padding: 10px;">
             <span class="setting-title" style="margin-bottom: 5px;">■ 復習テストの出題数</span>
             <div class="select-grid">
@@ -146,15 +144,32 @@
                     allWordsDatabase.push({ Number: parts[0].trim(), English: parts[1].trim(), Japanese: parts[2].trim() });
                 }
             }
-        } catch (error) {
-            alert(`単語データ(${CSV_FILE})が見つかりません。ファイル名が正しいか確認してください。`);
-        }
+        } catch (error) { alert(`単語データが見つかりません。`); }
     }
 
     function updateMistakeCount() {
         let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
         document.getElementById('mistake-count').innerText = saved.length; 
         document.getElementById('quick-mistake-count').innerText = saved.length;
+    }
+
+    function toggleStageRange(btn) {
+        btn.classList.toggle('active');
+        const actives = document.querySelectorAll('.stage-btn.active');
+        if (actives.length > 0) {
+            let min = Infinity;
+            let max = -Infinity;
+            actives.forEach(b => {
+                min = Math.min(min, parseInt(b.getAttribute('data-start')));
+                max = Math.max(max, parseInt(b.getAttribute('data-end')));
+            });
+            document.getElementById('custom-start').value = min;
+            document.getElementById('custom-end').value = max;
+        }
+    }
+
+    function clearStageSelection() {
+        document.querySelectorAll('.stage-btn').forEach(b => b.classList.remove('active'));
     }
 
     function showMistakeScreen() {
@@ -171,7 +186,7 @@
             });
         } else {
             testBtn.style.display = 'none'; weakSettings.style.display = 'none';
-            list.innerHTML = '<div style="text-align:center; color:#666; padding: 30px 10px;">現在、苦手な単語は登録されていません。<br>通常テストで間違えた単語がここに追加されます！</div>';
+            list.innerHTML = '<div style="text-align:center; color:#666; padding: 30px 10px;">現在、苦手な単語は登録されていません。</div>';
         }
         document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('mistake-screen').classList.remove('hidden');
     }
@@ -179,39 +194,48 @@
     function hideMistakeScreen() { document.getElementById('mistake-screen').classList.add('hidden'); document.getElementById('setup-screen').classList.remove('hidden'); }
     function setCount(num, btn) { document.getElementById('question-count').value = num; document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
     function setWeakCount(val, btn) { document.getElementById('weak-question-count').value = val; document.querySelectorAll('.weak-count-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-    function clearStageSelection() { document.querySelectorAll('.stage-btn.active').forEach(b => b.classList.remove('active')); }
-    function toggleStageBtn(btn) { btn.classList.toggle('active'); }
     function handleCardClick() { if (document.getElementById('test-screen').classList.contains('hidden')) return; if (isFront) flipCard(); else toggleWord(); }
     function toggleWord() { const word = words[currentIndex]; const display = document.getElementById('word-display'); display.innerText = (display.innerText === word.Japanese) ? word.English : word.Japanese; }
 
     async function startTest(mode) {
         currentMode = mode;
         if (mode === 'normal') { await loadCSV(); if (allWordsDatabase.length === 0) return; }
-
         try {
             if (mode === 'normal') {
                 const count = parseInt(document.getElementById('question-count').value);
-                const selectedRanges = []; const activeStages = document.querySelectorAll('.stage-btn.active');
-                if (activeStages.length > 0) { activeStages.forEach(btn => { selectedRanges.push([parseInt(btn.getAttribute('data-start')), parseInt(btn.getAttribute('data-end'))]); }); } 
-                else { const start = parseInt(document.getElementById('custom-start').value); const end = parseInt(document.getElementById('custom-end').value); if (!isNaN(start) && !isNaN(end)) selectedRanges.push([start, end]); }
-                if(selectedRanges.length === 0) { alert("範囲を指定してください。"); return; }
+                const activeStages = document.querySelectorAll('.stage-btn.active');
+                let filteredWords = [];
 
-                let filteredWords = allWordsDatabase.filter(w => { let num = parseInt(w.Number); return selectedRanges.some(r => num >= r[0] && num <= r[1]); });
-                if (filteredWords.length === 0) { alert("指定された範囲に単語がありません。"); return; }
+                if (activeStages.length > 0) {
+                    const ranges = Array.from(activeStages).map(b => ({
+                        start: parseInt(b.getAttribute('data-start')),
+                        end: parseInt(b.getAttribute('data-end'))
+                    }));
+                    filteredWords = allWordsDatabase.filter(w => {
+                        let num = parseInt(w.Number);
+                        return ranges.some(r => num >= r.start && num <= r.end);
+                    });
+                } else {
+                    const start = parseInt(document.getElementById('custom-start').value);
+                    const end = parseInt(document.getElementById('custom-end').value);
+                    if(isNaN(start) || isNaN(end)) { alert("範囲を正しく入力してください。"); return; }
+                    filteredWords = allWordsDatabase.filter(w => {
+                        let num = parseInt(w.Number);
+                        return num >= start && num <= end;
+                    });
+                }
+
+                if (filteredWords.length === 0) { alert("範囲内に単語がありません。"); return; }
                 filteredWords.sort(() => Math.random() - 0.5);
                 words = filteredWords.slice(0, Math.min(count, filteredWords.length));
             } else {
                 let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-                if (saved.length === 0) {
-                    alert("現在、登録されている苦手な単語はありません。\n通常テストで間違えた単語がここに追加されます！");
-                    return;
-                }
+                if (saved.length === 0) { alert("苦手な単語がありません。"); return; }
                 const weakCountVal = document.getElementById('weak-question-count').value;
                 let count = saved.length;
                 if (weakCountVal !== 'all') { count = Math.min(parseInt(weakCountVal), saved.length); }
                 saved.sort(() => Math.random() - 0.5); words = saved.slice(0, count);
             }
-            
             currentIndex = 0; correctWords = []; incorrectWords = [];
             document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('mistake-screen').classList.add('hidden'); document.getElementById('test-screen').classList.remove('hidden');
             updateDisplay();
@@ -235,13 +259,11 @@
     function finishTest() {
         document.getElementById('test-screen').classList.add('hidden'); document.getElementById('result-screen').classList.remove('hidden');
         document.getElementById('score-display').innerText = `${words.length}問中 ${correctWords.length}問正解`;
-
         let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); let weakDict = {}; saved.forEach(w => weakDict[w.Number] = w);
         incorrectWords.forEach(w => weakDict[w.Number] = w);
         if (currentMode === 'weak') { correctWords.forEach(w => { if (weakDict[w.Number]) delete weakDict[w.Number]; }); }
-        
         localStorage.setItem(LOCAL_KEY, JSON.stringify(Object.values(weakDict)));
-        document.getElementById('saving-text').innerText = "ブラウザに記録を保存しました📱";
+        document.getElementById('saving-text').innerText = "記録を保存しました📱";
     }
 
     document.addEventListener('keydown', (e) => {
