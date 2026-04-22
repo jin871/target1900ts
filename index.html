@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ターゲット1900 Webテスト</title>
+    <style>
+        * { box-sizing: border-box; } 
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #f0f2f5; text-align: center; color: #333; margin: 0; padding: 15px; }
+        #app-container { max-width: 450px; width: 100%; margin: 0 auto; background: white; padding: 25px 15px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-height: 500px; position: relative;}
+        h1 { color: #0056b3; font-size: 22px; margin-bottom: 5px; }
+        .subtitle { font-size: 13px; color: #666; margin-bottom: 20px; }
+        .setting-box { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: left; border: 1px solid #e9ecef; }
+        .setting-title { margin-top: 0; font-weight: bold; color: #495057; font-size: 13px; margin-bottom: 10px; display: block; }
+        .select-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+        .select-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+        .btn-opt { padding: 10px 2px; font-size: 12px; background-color: #fff; border: 1px solid #ced4da; border-radius: 6px; cursor: pointer; }
+        .btn-opt.active { background-color: #0056b3; color: white; border-color: #0056b3; }
+        .btn-main { padding: 16px; font-size: 18px; margin: 8px 0; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; width: 100%; }
+        .btn-blue { background-color: #007bff; color: white; }
+        .btn-red { background-color: #fa5252; color: white; }
+        .custom-inputs { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 10px; background: #fff; padding: 10px 5px; border-radius: 6px; border: 1px solid #ced4da; }
+        .custom-inputs span { font-size: 12px; white-space: nowrap; font-weight: bold; color: #495057; }
+        input[type="number"] { width: 75px; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; text-align: center; font-size: 15px; }
+        .number { color: #6c757d; font-size: 14px; font-weight: bold; text-align: left; }
+        .status { font-size: 16px; margin: 10px 0; color: #495057; font-weight: bold;}
+        .card { font-size: 34px; font-weight: bold; margin: 50px 0; min-height: 100px; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .btn-action { padding: 15px; font-size: 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-full { width: 100%; background-color: #f1f3f5; }
+        .btn-half { width: 48%; }
+        .btn-green { background-color: #28a745; color: white; }
+        .btn-wrong { background-color: #e03131; color: white; }
+        .btn-list { width: 100%; background-color: #fff4e6; color: #d9480f; border: 1px solid #ffd8a8; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+        .mistake-box { margin-top: 5px; text-align: left; background: #fff; border: 1px solid #ced4da; border-radius: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
+        .mistake-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #f1f3f5; font-size: 15px; }
+        .mistake-item:nth-child(even) { background-color: #f8f9fa; }
+        .mistake-jap { color: #ff5722; font-weight: normal; text-align: right; flex: 1; margin-left: 10px; word-break: break-word; } 
+        .mistake-num { color: #6c757d; font-size: 13px; font-family: monospace; font-weight: bold; width: 45px; margin-right: 5px; }
+        .mistake-eng { font-weight: bold; color: #333; } 
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <div id="setup-screen">
+        <h1>ターゲット1900</h1>
+        <div class="subtitle">Static Web App</div>
+
+        <button id="mistake-list-btn" class="btn-action btn-list hidden" onclick="showMistakeScreen()">
+            📝 苦手な単語リストを見る (<span id="mistake-count">0</span>語)
+        </button>
+
+        <div class="setting-box">
+            <span class="setting-title">■ 出題数</span>
+            <div class="select-grid">
+                <button class="btn-opt count-btn active" onclick="setCount(10, this)">10問</button>
+                <button class="btn-opt count-btn" onclick="setCount(20, this)">20問</button>
+                <button class="btn-opt count-btn" onclick="setCount(50, this)">50問</button>
+                <button class="btn-opt count-btn" onclick="setCount(100, this)">100問</button>
+            </div>
+            <input type="hidden" id="question-count" value="10">
+        </div>
+        <div class="setting-box">
+            <span class="setting-title">■ 範囲を選択（Part指定）</span>
+            <div class="select-grid-3">
+                <button class="btn-opt stage-btn active" data-start="1" data-end="800" onclick="toggleStageBtn(this)">Part 1<br>(1-800)</button>
+                <button class="btn-opt stage-btn" data-start="801" data-end="1500" onclick="toggleStageBtn(this)">Part 2<br>(801-1500)</button>
+                <button class="btn-opt stage-btn" data-start="1501" data-end="1900" onclick="toggleStageBtn(this)">Part 3<br>(1501-1900)</button>
+            </div>
+            <div class="custom-inputs">
+                <span>直接入力:</span>
+                <input type="number" id="custom-start" value="1" min="0" max="1900" step="100" oninput="clearStageSelection()">
+                <span style="color: #999;">〜</span>
+                <input type="number" id="custom-end" value="800" min="0" max="1900" step="100" oninput="clearStageSelection()">
+            </div>
+        </div>
+        
+        <button class="btn-main btn-blue" onclick="startTest('normal')">通常テスト開始</button>
+        <button id="quick-weak-test-btn" class="btn-main btn-red hidden" onclick="startTest('weak')" style="margin-top: 10px;">
+            苦手単語のテスト (<span id="quick-mistake-count">0</span>語)
+        </button>
+    </div>
+
+    <div id="mistake-screen" class="hidden">
+        <h2 style="color: #e03131; margin-top: 5px;">要復習リスト</h2>
+        <div class="setting-box" id="weak-settings" style="margin-bottom: 10px; padding: 10px;">
+            <span class="setting-title" style="margin-bottom: 5px;">■ 復習テストの出題数</span>
+            <div class="select-grid">
+                <button class="btn-opt weak-count-btn" onclick="setWeakCount('10', this)">10問</button>
+                <button class="btn-opt weak-count-btn" onclick="setWeakCount('20', this)">20問</button>
+                <button class="btn-opt weak-count-btn" onclick="setWeakCount('50', this)">50問</button>
+                <button class="btn-opt weak-count-btn active" onclick="setWeakCount('all', this)">すべて</button>
+            </div>
+            <input type="hidden" id="weak-question-count" value="all">
+        </div>
+        <button id="start-weak-test-btn" class="btn-main btn-red" onclick="startTest('weak')" style="margin-bottom: 10px; padding: 12px;">リストの単語でテスト開始</button>
+        <div class="mistake-box" id="full-mistake-list"></div>
+        <button class="btn-main" style="background: #e9ecef; color: #333;" onclick="hideMistakeScreen()">ホームに戻る</button>
+    </div>
+
+    <div id="test-screen" class="hidden">
+        <div class="number" id="word-number">No.0000</div>
+        <div class="status" id="status-text">1 / 10</div>
+        <div class="card" id="word-display" onclick="handleCardClick()">Word</div>
+        <div id="flip-controls">
+            <button class="btn-action btn-full" onclick="flipCard()">答えを見る (Space/Tap)</button>
+        </div>
+        <div id="judge-controls" class="hidden" style="display: flex; justify-content: space-between;">
+            <button class="btn-action btn-half btn-wrong" onclick="markIncorrect()">✕ 苦手 (←)</button>
+            <button class="btn-action btn-half btn-green" onclick="markCorrect()">〇 正解 (→)</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2>Result</h2>
+        <div class="card" id="score-display" style="font-size: 32px; cursor: default; margin: 20px 0; min-height: 60px;">0/0</div>
+        <p id="saving-text" style="color: #28a745; font-weight: bold; margin-top: 15px;"></p>
+        <button class="btn-main btn-blue" onclick="location.reload()">タイトルに戻る</button>
+    </div>
+</div>
+
+<script>
+    const LOCAL_KEY = 'target1900_weak_words'; 
+    const CSV_FILE = 'target1900.csv'; 
+    let allWordsDatabase = []; let words = []; let currentMode = 'normal'; let currentIndex = 0; let isFront = true; let correctWords = []; let incorrectWords = [];
+
+    document.addEventListener('DOMContentLoaded', () => { updateMistakeCount(); });
+
+    async function loadCSV() {
+        if (allWordsDatabase.length > 0) return; 
+        try {
+            const response = await fetch(CSV_FILE);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const text = await response.text();
+            const lines = text.split(/\r?\n/);
+            for (let i = 1; i < lines.length; i++) { 
+                if (!lines[i].trim()) continue;
+                const parts = lines[i].split(',');
+                if (parts.length >= 3) {
+                    allWordsDatabase.push({ Number: parts[0].trim(), English: parts[1].trim(), Japanese: parts[2].trim() });
+                }
+            }
+        } catch (error) {
+            alert(`単語データ(${CSV_FILE})が見つかりません。ファイル名が正しいか確認してください。`);
+        }
+    }
+
+    function updateMistakeCount() {
+        let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+        const mistakeBtn = document.getElementById('mistake-list-btn');
+        const quickTestBtn = document.getElementById('quick-weak-test-btn');
+        if (saved.length > 0) { 
+            mistakeBtn.classList.remove('hidden'); 
+            quickTestBtn.classList.remove('hidden');
+            document.getElementById('mistake-count').innerText = saved.length; 
+            document.getElementById('quick-mistake-count').innerText = saved.length;
+        } else { 
+            mistakeBtn.classList.add('hidden'); 
+            quickTestBtn.classList.add('hidden');
+        }
+    }
+
+    function showMistakeScreen() {
+        let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+        const list = document.getElementById('full-mistake-list'); const testBtn = document.getElementById('start-weak-test-btn'); const weakSettings = document.getElementById('weak-settings');
+        list.innerHTML = ''; 
+        if (saved.length > 0) {
+            testBtn.style.display = 'block'; weakSettings.style.display = 'block';
+            saved.sort((a, b) => parseInt(a.Number) - parseInt(b.Number));
+            saved.forEach(w => {
+                const item = document.createElement('div'); item.className = 'mistake-item';
+                item.innerHTML = `<div class="mistake-left"><span class="mistake-num">No.${w.Number}</span><span class="mistake-eng">${w.English}</span></div><span class="mistake-jap">${w.Japanese}</span>`;
+                list.appendChild(item);
+            });
+        } else {
+            testBtn.style.display = 'none'; weakSettings.style.display = 'none';
+            list.innerHTML = '<div style="text-align:center; color:#666; padding: 30px 10px;">現在、苦手な単語は登録されていません。</div>';
+        }
+        document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('mistake-screen').classList.remove('hidden');
+    }
+
+    function hideMistakeScreen() { document.getElementById('mistake-screen').classList.add('hidden'); document.getElementById('setup-screen').classList.remove('hidden'); }
+    function setCount(num, btn) { document.getElementById('question-count').value = num; document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+    function setWeakCount(val, btn) { document.getElementById('weak-question-count').value = val; document.querySelectorAll('.weak-count-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+    function clearStageSelection() { document.querySelectorAll('.stage-btn.active').forEach(b => b.classList.remove('active')); }
+    function toggleStageBtn(btn) { btn.classList.toggle('active'); }
+    function handleCardClick() { if (document.getElementById('test-screen').classList.contains('hidden')) return; if (isFront) flipCard(); else toggleWord(); }
+    function toggleWord() { const word = words[currentIndex]; const display = document.getElementById('word-display'); display.innerText = (display.innerText === word.Japanese) ? word.English : word.Japanese; }
+
+    async function startTest(mode) {
+        currentMode = mode;
+        if (mode === 'normal') { await loadCSV(); if (allWordsDatabase.length === 0) return; }
+
+        try {
+            if (mode === 'normal') {
+                const count = parseInt(document.getElementById('question-count').value);
+                const selectedRanges = []; const activeStages = document.querySelectorAll('.stage-btn.active');
+                if (activeStages.length > 0) { activeStages.forEach(btn => { selectedRanges.push([parseInt(btn.getAttribute('data-start')), parseInt(btn.getAttribute('data-end'))]); }); } 
+                else { const start = parseInt(document.getElementById('custom-start').value); const end = parseInt(document.getElementById('custom-end').value); if (!isNaN(start) && !isNaN(end)) selectedRanges.push([start, end]); }
+                if(selectedRanges.length === 0) { alert("範囲を指定してください。"); return; }
+
+                let filteredWords = allWordsDatabase.filter(w => { let num = parseInt(w.Number); return selectedRanges.some(r => num >= r[0] && num <= r[1]); });
+                if (filteredWords.length === 0) { alert("指定された範囲に単語がありません。"); return; }
+                filteredWords.sort(() => Math.random() - 0.5);
+                words = filteredWords.slice(0, Math.min(count, filteredWords.length));
+            } else {
+                let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+                if (saved.length === 0) return;
+                const weakCountVal = document.getElementById('weak-question-count').value;
+                let count = saved.length;
+                if (weakCountVal !== 'all') { count = Math.min(parseInt(weakCountVal), saved.length); }
+                saved.sort(() => Math.random() - 0.5); words = saved.slice(0, count);
+            }
+            
+            currentIndex = 0; correctWords = []; incorrectWords = [];
+            document.getElementById('setup-screen').classList.add('hidden'); document.getElementById('mistake-screen').classList.add('hidden'); document.getElementById('test-screen').classList.remove('hidden');
+            updateDisplay();
+        } catch(e) { alert("エラーが発生しました。"); }
+    }
+
+    function updateDisplay() {
+        if(currentIndex >= words.length) { finishTest(); return; }
+        const word = words[currentIndex];
+        document.getElementById('status-text').innerText = `${currentIndex + 1} / ${words.length}`;
+        document.getElementById('word-number').innerText = `No.${word.Number}`;
+        document.getElementById('word-display').innerText = isFront ? word.English : word.Japanese;
+        document.getElementById('flip-controls').classList.toggle('hidden', !isFront);
+        document.getElementById('judge-controls').classList.toggle('hidden', isFront);
+    }
+    function flipCard() { isFront = false; updateDisplay(); }
+    function markCorrect() { correctWords.push(words[currentIndex]); nextCard(); }
+    function markIncorrect() { incorrectWords.push(words[currentIndex]); nextCard(); }
+    function nextCard() { currentIndex++; isFront = true; updateDisplay(); }
+    
+    function finishTest() {
+        document.getElementById('test-screen').classList.add('hidden'); document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('score-display').innerText = `${words.length}問中 ${correctWords.length}問正解`;
+
+        let saved = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); let weakDict = {}; saved.forEach(w => weakDict[w.Number] = w);
+        incorrectWords.forEach(w => weakDict[w.Number] = w);
+        if (currentMode === 'weak') { correctWords.forEach(w => { if (weakDict[w.Number]) delete weakDict[w.Number]; }); }
+        
+        localStorage.setItem(LOCAL_KEY, JSON.stringify(Object.values(weakDict)));
+        document.getElementById('saving-text').innerText = "ブラウザに記録を保存しました📱";
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('test-screen').classList.contains('hidden')) {
+            if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (isFront) flipCard(); else toggleWord(); }
+            else if (e.code === 'ArrowLeft' && !isFront) markIncorrect(); else if (e.code === 'ArrowRight' && !isFront) markCorrect();
+        } else if (!document.getElementById('result-screen').classList.contains('hidden')) {
+            if (e.code === 'Space' || e.code === 'Enter') location.reload();
+        }
+    });
+</script>
+</body>
+</html>
